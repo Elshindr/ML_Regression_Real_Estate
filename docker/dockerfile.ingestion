@@ -1,0 +1,15 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY ingestion/ORM.py ./ingestion/ORM.py 
+COPY ingestion/main.py ./ingestion/main.py
+COPY ingestion/createDB.py ./ingestion/createDB.py
+COPY ingestion/transform.py ./ingestion/transform.py
+COPY data/price_raw.json ./data/price_raw.json
+
+CMD ["python", "-m", "ingestion.main"]

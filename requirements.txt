@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+sqlalchemy
+pymysql
+scikit-learn
+joblib
+python-dotenv
+pytest
+faker
+seaborn
+mysql-connector-python

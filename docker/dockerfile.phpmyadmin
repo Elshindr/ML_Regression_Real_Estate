@@ -1,0 +1,6 @@
+FROM phpmyadmin:latest
+
+ENV PMA_HOST=mysql_cont
+ENV PMA_PORT=3306
+
+EXPOSE 80
