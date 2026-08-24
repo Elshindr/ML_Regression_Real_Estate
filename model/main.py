@@ -11,9 +11,12 @@ import logging
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder, OneHotEncoder
-from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
 
 load_dotenv()
 host = os.getenv("MYSQL_HOST", "127.0.0.1")
@@ -95,27 +98,63 @@ def train_model(df: pd.DataFrame):
     logger.info(X_train_final.head())
     print(X_train_final.head())
 
-    features= ["surface", "yearBuilt", "rooms", "idCity", "idType"] 
-    model = RandomForestRegressor(random_state=42)
-
+    features = ["surface", "yearBuilt", "rooms", "idCity", "idType"]
+    model = DecisionTreeRegressor(max_depth=3, min_samples_leaf=25, random_state=42)
     model.fit(X_train_final[features], y_train)
+    
+    coeffs = list(model.coef_)
+    coeffs.insert(0, model.intercept_)
+
+    feats = list(X_train_final[features].columns)
+    feats.insert(0,"intercept")
+
+    pd.DataFrame({"valeur estimée":coeffs}, index=feats)
+
 
     y_pred = model.predict(X_test_final[features])
     mae = mean_absolute_error(y_test, y_pred)
     rmse = mean_squared_error(y_test, y_pred) ** 0.5
     r2 = r2_score(y_test, y_pred)
+    
+    residuals = y_test - y_pred
+    plt.scatter(y_pred, residuals)
+    plt.axhline(0)
+    plt.xlabel("Valeurs prédites")
+    plt.ylabel("Résidus")
+    plt.show()
+
+
+
+    
+    plt.scatter(y_pred, y_test)
+    plt.plot((y_test.min(), y_test.max()), (y_test.min(), y_test.max()), c="r")
+    plt.show()
+
+    plot_tree(
+        model,
+        feature_names=features,
+        #class_names=["Died", "Survived"],
+        filled=True,
+        rounded=True,
+    )
+
+    plt.show()
 
     print("MAE :", mae)
     print("RMSE:", rmse)
     print("R²  :", r2)
-    
+    print(f"score train:{model.score(X_train_final[features], y_train)}")
+    print(f"score test:{model.score(X_test_final[features], y_test)}")
+
     importance = pd.Series(
         model.feature_importances_, index=X_train_final[features].columns
     ).sort_values(ascending=False)
 
+    importance.plot(kind='bar', figsize=(8,6))
+    plt.show()
     print(importance)
-    
-    joblib.dump(model, './model/regression_model.pkl')
+
+    joblib.dump(model, "./model/regression_model.pkl")
 
 
 if __name__ == "__main__":
